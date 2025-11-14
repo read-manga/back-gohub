@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"microgo/core/handler"
+	"microgo/infrastructure/controller"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(r *gin.Engine, authHandler *handler.AuthHandler) {
+func SetupRoutes(r *gin.Engine, authHandler *controller.AuthHandler) {
 	v1 := r.Group("/auth")
 	{
 		v1.POST("/register", authHandler.Register)

@@ -3,22 +3,22 @@ package usecase
 import (
 	"errors"
 	"microgo/core/domain/user"
-	"microgo/core/infra/security"
-	"microgo/core/repository"
+	"microgo/infrastructure/repository"
+	"microgo/infrastructure/security"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthUsecase struct {
-	repo repository.UserRepository
+	user repository.UserRepository
 }
 
 func NewAuthUsecase(r repository.UserRepository) *AuthUsecase {
-	return &AuthUsecase{repo: r}
+	return &AuthUsecase{user: r}
 }
 
 func (a *AuthUsecase) Register(u user.User) error {
-	exists, _ := a.repo.FindByEmail(u.Email)
+	exists, _ := a.user.FindByEmail(u.Email)
 	if exists != nil {
 		return errors.New("email já registrado")
 	}
@@ -29,11 +29,11 @@ func (a *AuthUsecase) Register(u user.User) error {
 	}
 
 	u.Password = string(hash)
-	return a.repo.Create(u)
+	return a.user.Create(u)
 }
 
 func (a *AuthUsecase) Login(email, password string) (string, error) {
-	u, err := a.repo.FindByEmail(email)
+	u, err := a.user.FindByEmail(email)
 	if err != nil {
 		return "", errors.New("usuário não encontrado")
 	}
