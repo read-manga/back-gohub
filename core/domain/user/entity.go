@@ -1,12 +1,11 @@
 package user
 
 type User struct {
-	Username string
-	Email    string
-	Password string
-	Id       string
-	Icon     string
-	Bio      string
-	Url_port string
-	Status   string
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	Password    string `json:"password,omitempty"`
+	Bio         string `json:"bio"`
+	Profile_url string `json:"profile_url"`
+	Status      string `json:"status"`
 }
