@@ -51,3 +51,18 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
+
+func (h *AuthHandler) UpdateUser(c *gin.Context) {
+	var u user.User
+	if err := c.ShouldBindJSON(&u); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error":err.Error()})
+		return
+	}
+
+	if err := h.usecase.Update(u); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error":err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message":"Usuario atualizado com sucesso"})
+}

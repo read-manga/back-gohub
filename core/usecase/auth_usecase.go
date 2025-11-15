@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+
 	"microgo/core/domain/user"
 	"microgo/infrastructure/repository"
 	"microgo/infrastructure/security"
@@ -47,4 +48,11 @@ func (a *AuthUsecase) Login(email, password string) (string, error) {
 		return "", err
 	}
 	return token, nil
+}
+
+func (a *AuthUsecase) Update(data user.User) error {
+	if data.ID == "" {
+		return errors.New("Id is required")
+	}
+	return a.user.UserUpdate(data)
 }
