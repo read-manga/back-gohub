@@ -14,4 +14,6 @@ type Repo struct {
 	StorageS3    string   `json:"storage_s3"`
 	UserId       string   `json:"user_id"`
 	Colaborators []string `json:"colaborators"`
+	Pin          bool     `json:"pin"`
 }
+

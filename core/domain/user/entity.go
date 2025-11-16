@@ -1,5 +1,7 @@
 package user
 
+import "microgo/core/domain/repo"
+
 type User struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -8,4 +10,5 @@ type User struct {
 	Bio         string `json:"bio"`
 	Profile_url string `json:"profile_url"`
 	Status      string `json:"status"`
+	Repos       []repo.Repo       `json:"repos"`  
 }
