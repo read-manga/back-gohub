@@ -13,6 +13,6 @@ func NewRepoUseCase(r repository.RepoRepository) *RepoUseCase {
 	return &RepoUseCase{repo: r}
 }
 
-func (r *RepoUseCase) Save(repo repo.Repo) error {
+func (r *RepoUseCase) SaveRepo(repo repo.Repo) (string, error) {
 	return r.repo.Create(repo)
 }

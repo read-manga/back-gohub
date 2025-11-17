@@ -6,7 +6,7 @@ import (
 )
 
 type RepoRepository interface {
-	Create(u repo.Repo) error
+	Create(u repo.Repo) (string, error)
 	FindAll(user_id string) (*[]repo.Repo, error)
 	FindById(id string) (*repo.Repo, error)
 	FindName(name string) (*[]repo.Repo, error)
@@ -20,13 +20,23 @@ func NewRepoRepository(db *sql.DB) RepoRepository {
 	return &repoRepository{db: db}
 }
 
-func (r *repoRepository) Create(entity repo.Repo) error {
-	_, err := r.db.Exec(
-		`INSERT INTO users (name, about, tag, public, storage_s3, user_id, colaborators)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-		entity.Name, entity.About, entity.Tag, entity.Public, entity.StorageS3, entity.UserId, entity.Colaborators,
-	)
-	return err
+func (r *repoRepository) Create(entity repo.Repo) (string, error) {
+	var id string
+
+	err := r.db.QueryRow(`
+		INSERT INTO repositorys (name, about, tag, public, storage_s3, user_id, colaborators)
+        VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
+		`,
+		&entity.Name, &entity.About, &entity.Tag, &entity.Public, &entity.StorageS3, &entity.UserId, &entity.Colaborators,
+	).Scan(&id)
+
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+
 }
 
 func (r *repoRepository) FindAll(user_id string) (*[]repo.Repo, error) {
@@ -59,7 +69,7 @@ func (r *repoRepository) FindAll(user_id string) (*[]repo.Repo, error) {
 func (r *repoRepository) FindById(id string) (*repo.Repo, error) {
 	var re = repo.Repo{}
 
-	query := r.db.QueryRow(`SELECT * FROM repositorys WHERE id == $1`, id)
+	query := r.db.QueryRow(`SELECT * FROM repositorys WHERE id = $1`, id)
 
 	err := query.Scan(&re.ID, &re.Name, &re.About, &re.Tag, &re.Stars, &re.Public, &re.StorageS3, &re.UserId, &re.Colaborators)
 	if err != nil {

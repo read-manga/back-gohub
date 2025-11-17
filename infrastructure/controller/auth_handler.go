@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"microgo/core/domain/repo"
 	"microgo/core/domain/user"
 	"microgo/core/usecase"
 	"net/http"
@@ -67,36 +66,21 @@ func (h *AuthHandler) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": u})
 }
 
-
-func (h *AuthHandler) UpdateRepository(c *gin.Context) {
-	var r repo.Repo
-	if err := c.ShouldBindJSON(&r); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error":err.Error()})
-		return
-	}
-	if err := h.usecase.UpdateRepository(r); err != nil {
-
-		c.JSON(http.StatusBadRequest, gin.H{"error":err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message":r})
-}
-
 func (h *AuthHandler) UserFind(c *gin.Context) {
-    var body struct {
-        ID string `json:"id"`
-    }
+	var body struct {
+		ID string `json:"id"`
+	}
 
-    if err := c.ShouldBindJSON(&body); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    data, err := h.usecase.Me(body.ID)
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	data, err := h.usecase.Me(body.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"data": data})
+	c.JSON(http.StatusOK, gin.H{"data": data})
 }
