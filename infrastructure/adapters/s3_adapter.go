@@ -3,8 +3,7 @@ package adapters
 import (
 	"context"
 	"crypto/sha256"
-	"fmt"
-	"path/filepath"
+	"encoding/hex"
 
 	"microgo/core/domain/change"
 
@@ -18,11 +17,9 @@ import (
 type S3Adapter interface {
 	UploadFileS3(bucket string, key string, filePath string) error
 
-	CreateFileHash(path string) (string, error)
+	CreateFileHash(b []byte) string
 
-	ScanFolder(basePath string) (map[string]string, error)
-
-	DiffFolders(oldFolder string, newFolder string) ([]change.Change, error)
+	DiffFolders(oldFolder *[]change.Change, newFolder []change.NewFilesBody) []change.Change
 }
 
 type s3Adapter struct{}
@@ -54,60 +51,27 @@ func (s *s3Adapter) UploadFileS3(bucket string, key string, filePath string) err
 	return err
 }
 
-func (s *s3Adapter) CreateFileHash(path string) (string, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-
-	sum := sha256.Sum256(data)
-	return fmt.Sprintf("%x", sum), nil
+func (s *s3Adapter) CreateFileHash(b []byte) string {
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:])
 }
 
-func (s *s3Adapter) ScanFolder(basePath string) (map[string]string, error) {
-	result := make(map[string]string)
-
-	err := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			return nil
-		}
-
-		rel, err := filepath.Rel(basePath, path)
-		if err != nil {
-			return err
-		}
-
-		hash, err := s.CreateFileHash(path)
-		if err != nil {
-			return err
-		}
-
-		result[rel] = hash
-		return nil
-	})
-
-	return result, err
-}
-
-func (s *s3Adapter) DiffFolders(oldFolder string, newFolder string) ([]change.Change, error) {
-	oldFiles, err := s.ScanFolder(oldFolder)
-	if err != nil {
-		return nil, err
-	}
-
-	newFiles, err := s.ScanFolder(newFolder)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *s3Adapter) DiffFolders(previous *[]change.Change, current []change.NewFilesBody) []change.Change {
 	diffs := []change.Change{}
 
-	for path, newHash := range newFiles {
-		oldHash, exists := oldFiles[path]
+	prevMap := map[string]string{}
+	currMap := map[string]string{}
+
+	for _, p := range *previous {
+		prevMap[p.FilePath] = p.NewHash
+	}
+
+	for _, c := range *current {
+		currMap[c.Path] = c.Hash
+	}
+
+	for path, oldHash := range prevMap {
+		newHash, exists := currMap[path]
 
 		if !exists {
 			diffs = append(diffs, change.Change{
@@ -126,8 +90,8 @@ func (s *s3Adapter) DiffFolders(oldFolder string, newFolder string) ([]change.Ch
 		}
 	}
 
-	for path, oldHash := range oldFiles {
-		if _, exitis := newFiles[path]; !exitis {
+	for path, oldHash := range currMap {
+		if _, exitis := prevMap[path]; !exitis {
 			diffs = append(diffs, change.Change{
 				ChangeType:   change.Removed,
 				PreviousHash: oldHash,
@@ -135,6 +99,5 @@ func (s *s3Adapter) DiffFolders(oldFolder string, newFolder string) ([]change.Ch
 		}
 	}
 
-	return diffs, nil
-
+	return diffs
 }

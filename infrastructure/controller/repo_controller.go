@@ -13,7 +13,7 @@ type RepoController struct {
 }
 
 func NewRepoController(r *usecase.RepoUseCase) *RepoController {
-	return &RepoController{r}
+	return &RepoController{usecase: r}
 }
 
 func (r *RepoController) CreateRepository(c *gin.Context) {
