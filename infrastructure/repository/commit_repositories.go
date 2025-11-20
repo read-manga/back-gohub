@@ -1,14 +1,16 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"microgo/core/domain/commit"
 )
 
 type CommitRepository interface {
-	Create(u commit.Commit) error
+	Create(u commit.Commit) (string, error)
 	FindAllCommitRepoId(repo_id string) (*[]commit.Commit, error)
 	FindCommitById(id string) (*commit.Commit, error)
+	FindCommitByDate(ctx context.Context) (*commit.Commit, error)
 }
 
 type commitRepository struct {
@@ -19,13 +21,19 @@ func NewCommitRepository(db *sql.DB) CommitRepository {
 	return &commitRepository{db: db}
 }
 
-func (c *commitRepository) Create(entity commit.Commit) error {
-	_, err := c.db.Exec(
-		`INSERT INTO users (title, descritpion, repo_id, user_id, created_at)
-         VALUES ($1, $2, $3, $4, $5)`,
+func (c *commitRepository) Create(entity commit.Commit) (string, error) {
+	var commitId string
+
+	err := c.db.QueryRow(`INSERT INTO commit (title, descritpion, repo_id, user_id, created_at)
+        VALUES ($1, $2, $3, $4, $5) RETURNING id`,
 		entity.Title, entity.Description, entity.RepoId, entity.UserId, entity.CreatedAt,
-	)
-	return err
+	).Scan(&commitId)
+
+	if err != nil {
+		return "", nil
+	}
+
+	return commitId, nil
 }
 
 func (c *commitRepository) FindAllCommitRepoId(repo_id string) (*[]commit.Commit, error) {
@@ -67,4 +75,16 @@ func (c *commitRepository) FindCommitById(id string) (*commit.Commit, error) {
 	}
 
 	return &co, nil
+}
+
+func (c *commitRepository) FindCommitByDate(ctx context.Context) (*commit.Commit, error) {
+	var commitQuery = commit.Commit{}
+
+	query := c.db.QueryRowContext(ctx, `SELECT * FROM commit ORDER BY created_at DESC LIMIT 1;`)
+
+	if err := query.Scan(&commitQuery.ID, &commitQuery.CreatedAt); err != nil {
+		return nil, err
+	}
+
+	return &commitQuery, nil
 }

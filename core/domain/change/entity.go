@@ -16,3 +16,9 @@ type Change struct {
 	PreviousHash string     `json:"previous_hash"`
 	NewHash      string     `json:"new_hash"`
 }
+
+type NewFilesBody struct {
+	Path    string
+	Hash    string
+	Content []byte
+}
